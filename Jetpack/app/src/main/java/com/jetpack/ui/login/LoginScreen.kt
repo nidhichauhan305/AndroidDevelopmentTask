@@ -50,6 +50,7 @@ import com.jetpack.utils.SelectPasswordEditField
 import com.jetpack.utils.SharedPrefsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -88,22 +89,22 @@ fun LoginScreen(navController: NavHostController) {
                 Column(modifier = Modifier
                     .fillMaxWidth()
                     .padding(all = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = "Zenithra", color = Color.LightGray, fontSize = 15.sp)
-                    Text(text = "Welcome Back", color = Color.LightGray, fontSize = 20.sp, modifier = Modifier.padding(vertical = 2.dp))
+                    Text(text = "Zenithra", color = Color.LightGray, fontSize = 16.sp)
+                    Text(text = "Welcome Back", color = Color.LightGray, fontSize = 22.sp, modifier = Modifier.padding(vertical = 2.dp))
                     Text(text =if(type.value==2){
                         "Please enter your details to sign up"}
 
                     else{
                             "Please enter your details to sign in"}
 
-                    , color = colorResource(R.color.text_color), fontSize = 13.sp)
+                    , color = colorResource(R.color.text_color), fontSize = 12.sp)
 
-                    Box(modifier = Modifier.height(15.dp))
+                    Box(modifier = Modifier.height(20.dp))
                     SelectEditField(email,"Your email address", ImeAction.Next, KeyboardType.Email, onClick = {
 
                     })
 
-                    Box(modifier = Modifier.height(10.dp))
+                    Box(modifier = Modifier.height(15.dp))
                     SelectPasswordEditField(password,passwordVisible,"Password", ImeAction.Done, KeyboardType.Password,
                       onClick = {
                     })
@@ -125,7 +126,7 @@ fun LoginScreen(navController: NavHostController) {
                                     userAuthViewModel.signUp(newUser){
                                             result ->
                                         CoroutineScope(Dispatchers.Main).launch {
-
+                                            delay(100)
                                             if (result == LoginResult.Success) {
                                                 Toast.makeText(
                                                     context,
@@ -135,7 +136,7 @@ fun LoginScreen(navController: NavHostController) {
                                                 SharedPrefsManager.setIsLogin(context,true)
 
                                                 navController.navigate(Screen.Manga.route) {
-                                                    popUpTo(Screen.Manga.route) { inclusive = true }
+                                                    popUpTo(Screen.Login.route) { inclusive = true }
                                                     launchSingleTop = true
                                                 }
                                             }

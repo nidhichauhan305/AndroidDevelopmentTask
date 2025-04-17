@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.colorResource
@@ -52,7 +53,7 @@ import com.jetpack.room.UserDatabase
 import com.jetpack.ui.login.UserAuthViewModelFactory
 import com.jetpack.room.repository.UserRepository
 import com.jetpack.room.viewModel.UserViewModel
-import com.jetpack.utils.progressBar
+import com.jetpack.utils.ProgressBar
 import com.jetpack.ui.manga.viewModel.MangaViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -65,7 +66,7 @@ fun MangaList(navController: NavHostController) {
     val viewModel: MangaViewModel = viewModel()
 
     val mangaState = viewModel.mangaResponse.observeAsState()
-    val mangaList = remember {
+    val mangaList = rememberSaveable  {
         mutableStateOf<List<MangaResponse.Data>>(emptyList())
     }
     val db = remember { UserDatabase.getInstance(context) }
@@ -74,21 +75,18 @@ fun MangaList(navController: NavHostController) {
     val factory = UserAuthViewModelFactory(repository)
     val userAuthViewModel: UserViewModel = viewModel(factory = factory)
     val listState = rememberLazyGridState()
-    val currentPage = remember { mutableIntStateOf(1) }
+    val currentPage = rememberSaveable { mutableIntStateOf(1) }
     val endReached = remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (mangaList.value.isEmpty()) {
-            if (Connectivity.isConnected(context)) {
-
-                isLoading.value = true
-                viewModel.getMangaList(1, context)
-
-            } else {
+        if (mangaList.value.isEmpty() && Connectivity.isConnected(context)) {
+            isLoading.value = true
+            viewModel.getMangaList(currentPage.value, context)
+        } else {
                 val offlineList = userAuthViewModel.getMangaData()
                 mangaList.value = offlineList
             }
-        }
+
     }
 
     LaunchedEffect(listState) {
@@ -110,7 +108,7 @@ fun MangaList(navController: NavHostController) {
             if (response.data.isNotEmpty()) {
                 LaunchedEffect(response) {
                     if (currentPage.value == 1) {
-                        userAuthViewModel.clearMangaList()
+                       // userAuthViewModel.clearMangaList()
                         userAuthViewModel.addMangaData(response.data)
                         mangaList.value = response.data
                     } else {
@@ -133,11 +131,20 @@ fun MangaList(navController: NavHostController) {
         .statusBarsPadding()
         .navigationBarsPadding(), containerColor = Color.Black) {
 
+        if (isLoading.value && mangaList.value.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                ProgressBar()
+            }
+        } else {
             SwipeRefresh(
                 state = SwipeRefreshState(isRefreshing.value),
                 onRefresh = {
                     isRefreshing.value = true
-                    currentPage.value = 1
+                    currentPage.intValue = 1
                     endReached.value = false
                     viewModel.getMangaList(1, context)
                 }
@@ -168,7 +175,7 @@ fun MangaList(navController: NavHostController) {
                             {
                                 Image(
                                     painter = rememberAsyncImagePainter(
-                                        model =  ImageRequest.Builder(context)
+                                        model = ImageRequest.Builder(context)
                                             .data(mangaList.value[index].thumb)
                                             .diskCachePolicy(CachePolicy.ENABLED)
                                             .build(),
@@ -185,22 +192,11 @@ fun MangaList(navController: NavHostController) {
 
                         }
 
-                        if (isLoading.value && !isRefreshing.value) {
-                            item(span = { GridItemSpan(3) }) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    progressBar()
-                                }
-                            }
-                        }
 
                     }
                 }
             }
+        }
 
 
     }

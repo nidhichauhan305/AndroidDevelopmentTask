@@ -39,7 +39,7 @@ import com.jetpack.R
 
 @Preview(showSystemUi = true)
     @Composable
-    fun progressBar() {
+    fun ProgressBar() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
